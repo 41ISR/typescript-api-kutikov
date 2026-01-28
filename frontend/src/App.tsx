@@ -3,14 +3,36 @@ import "./App.css"
 import { Form } from "./components/Form"
 import { type IUser } from "./types"
 import { User } from "./components/User"
+import { apiClient, ApiError } from "./api/client"
 
 export default function App() {
-    const [users, setUsers] = useState<IUser[]>([
-        {id: 123, name: "John", email: "John@doe", createdAt: "0"}
-    ])
+    const [users, setUsers] = useState<IUser[]>([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<null | string>(null)
+
+    const fetchUsers = async () => {
+        setIsLoading(true)
+        try {
+            const response = await apiClient.getUsers()
+
+            if (response.success && response.data) {
+                setUsers(response.data)
+            } else {
+                setError(response.error || "Failed to fetch users")
+            }
+        } catch (error) {
+            if (error instanceof ApiError) {
+                setError(`Error ${error.status}: ${error.message}`)
+            } else {
+                setError("Unexpected error")
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     useEffect(() => {
-        
+        fetchUsers()
     }, [])
     return (
         <div className="app">
@@ -30,9 +52,13 @@ export default function App() {
                         <button className="btn btn-secondary">Refresh</button>
                     </div>
 
-                    <div className="users-list">
-                        {users.map((el) => <User {...el} />)}
-                    </div>
+                    {isLoading && users.length === 0 ?
+                        (<div className="loading">
+                            Loading users...
+                        </div>) :
+                        (<div className="users-list">
+                            {users.map((el) => <User {...el} />)}
+                        </div>)}
                 </section>
             </main>
         </div>

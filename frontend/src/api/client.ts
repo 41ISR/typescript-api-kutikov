@@ -1,4 +1,6 @@
-class ApiError extends Error {
+import type { IApiResponse, IUser } from "../types"
+
+export class ApiError extends Error {
     status: number
 
     constructor(status: number, message: string) {
@@ -40,7 +42,7 @@ class ApiClient {
                     `HTTP ${response.status}: ${response.statusText}`
                 )
             }
-            
+
             return await response.json()
         } catch (error) {
             if (error instanceof ApiError) {
@@ -55,7 +57,23 @@ class ApiClient {
     }
 
     async get<T>(endpoint: string): Promise<T> {
-        return this.request<T>
+        return this.request<T>(endpoint, {
+            method: "GET"
+        })
+    }
+    
+    async post<TRequest, TResponse>(
+        endpoint: string,
+        data: TRequest
+    ): Promise<TResponse> {
+        return this.request<TResponse>(endpoint, {
+            method: "POST",
+            body: JSON.stringify(data)
+        })
+    }
+
+    async getUsers(): Promise<IApiResponse<IUser[]>> {
+        return this.get<IApiResponse<IUser[]>>("/users")
     }
 }
 
