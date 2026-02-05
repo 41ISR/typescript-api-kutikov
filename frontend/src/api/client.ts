@@ -1,4 +1,4 @@
-import type { IApiResponse, IUser } from "../types"
+import type { IApiResponse, ICreateUserRequest, IUser } from "../types"
 
 export class ApiError extends Error {
     status: number
@@ -92,9 +92,26 @@ class ApiClient {
         })
     }
 
+    async delete<T>(endpoint: string): Promise<T> {
+        return this.request<T>(endpoint, {
+            method: "DELETE"
+        })
+    }
+
     async getUsers(): Promise<IApiResponse<IUser[]>> {
         return this.get<IApiResponse<IUser[]>>("/users")
     }
+
+    async createUser(data: ICreateUserRequest):
+        Promise<IApiResponse<IUser>> {
+        return this.post<ICreateUserRequest, 
+               IApiResponse<IUser>>("/users", data)
+    }
+
+    async deleteUser(id: number):
+        Promise<IApiResponse<void>> {
+            return this.delete<IApiResponse<void>>(`/users/${id}`)
+        }
 }
 
 export const apiClient = new ApiClient()

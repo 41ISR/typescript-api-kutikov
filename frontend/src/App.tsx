@@ -43,16 +43,46 @@ export default function App() {
     const handleInputChange = (
         e: ChangeEvent<HTMLInputElement>
     ) => {
-        const {name, value} = e.target
-        setFormData(old => 
-            ({...old, [name]: value})
+        const { name, value } = e.target
+        setFormData(old =>
+            ({ ...old, [name]: value })
         )
     }
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
-        console.log(formData)
+        setError(null)
+
+        if (!formData.name.trim() || !formData.email.trim()) {
+            setError("Name and email are required")
+            return
+        }
+
+        try {
+            const response = await apiClient.createUser(formData)
+
+            if (response.success && response.data) {
+                fetchUsers()
+                setFormData({
+                    name: "", email: ""
+                })
+            } else {
+                setError(response.error || "Failed to create user")
+            }
+        } catch (error) {
+            if (error instanceof ApiError) {
+                setError(`Error ${error.status}: ${error.message}`)
+            } else {
+                setError("Unexpected error")
+            }
+        }
     }
+
+    const handleDelete = async (id: number) => {
+        await apiClient.deleteUser(id)
+        fetchUsers()
+    }
+
     return (
         <div className="app">
             <header className="header">
@@ -80,7 +110,7 @@ export default function App() {
                             Loading users...
                         </div>) :
                         (<div className="users-list">
-                            {users.map((el, i) => <User key={i} {...el} />)}
+                            {users.map((el, i) => <User handleDelete={handleDelete} key={i} {...el} />)}
                         </div>)}
                 </section>
             </main>
